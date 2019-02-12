@@ -1,40 +1,38 @@
-public static void Quicksort(int[] elements, int left, int right)
+public static void quicksort(int[] a, int left, int right)
 {
     int i = left, j = right;
-    IComparable pivot = elements[(left + right) / 2];
+    int pivot = a[(i + j)/2];
 
-    while (i <= j)
+    while (i < j) 
     {
-        while (elements[i].CompareTo(pivot) < 0)
+        while (a[i] < pivot) 
         {
             i++;
         }
 
-        while (elements[j].CompareTo(pivot) > 0)
+        while (a[j] > pivot) 
         {
             j--;
-        }
+        } 
 
-        if (i <= j)
+        if (i <= j) 
         {
-            // Swap
-            var tmp = elements[i];
-            elements[i] = elements[j];
-            elements[j] = tmp;
+            int t = a[i];
+            a[i] = a[j];
+            a[j] = t;
 
             i++;
             j--;
         }
     }
 
-    // Recursive calls
-    if (left < j)
+    if (i < right) 
     {
-        Quicksort(elements, left, j);
+        quickSort(a, i, right);
     }
 
-    if (i < right)
+    if (j > left) 
     {
-        Quicksort(elements, i, right);
+        quickSort(a, left, j);
     }
 }
