@@ -12,107 +12,129 @@ using System.Text.RegularExpressions;
 using System.Text;
 using System;
 
-class Solution {
+public class Edge 
+{
+    public Node To { get; set; }
 
-    // Complete the prims function below.
-    static int prims(int n, int[][] edges, int start) {
-        var d = new Dictionary<int, Dictionary<int, int>>();
+    public int Weight { get; set; }
 
-        for (int i = 0; i < edges.Length; i++) 
+    public Edge(Node to, int weight) 
+    {
+        To = to;
+        Weight = weight;
+    }
+}
+
+public class Node 
+{
+    public int Id { get; set; }
+
+    public List<Edge> Edges { get; set; }
+
+    public Node(int id) 
+    {
+        Id = id;
+        Edges = new List<Edge>();
+    }
+}
+
+class Result
+{
+    public static Dictionary<int, Node> BuildTree(List<int> gFrom, List<int> gTo, List<int> gWeight) 
+    {
+        var d = new Dictionary<int, Node>();
+
+        for (int i = 0; i < gFrom.Count; i++) 
         {
-            var directedEdges = new List<int[]>();
-            directedEdges.Add(new int[] {edges[i][0], edges[i][1], edges[i][2]});
-            directedEdges.Add(new int[] {edges[i][1], edges[i][0], edges[i][2]});
+            Node fromNode;
+            Node toNode;    
 
-            foreach(var direction in directedEdges) 
+            if (!d.ContainsKey(gFrom[i])) 
             {
-                int x = direction[0];
-                int y = direction[1];
-                int r = direction[2];
-
-                if (!d.ContainsKey(x))
-                {
-                    d.Add(x, new Dictionary<int, int>());
-                }
-
-                if (d[x].ContainsKey(y) && d[x][y] > r) 
-                {
-                    d[x][y] = r;
-                }
-
-                if (!d[x].ContainsKey(y)) 
-                {
-                    d[x].Add(y, r);
-                }
+                fromNode = new Node(gFrom[i]);
+                d.Add(gFrom[i], fromNode);
             }
+            
+            if (!d.ContainsKey(gTo[i])) 
+            {
+                toNode = new Node(gTo[i]);
+                d.Add(gTo[i], toNode);
+            }
+
+            fromNode = d[gFrom[i]];
+            toNode = d[gTo[i]];
+
+            fromNode.Edges.Add(new Edge(toNode, gWeight[i]));
+            toNode.Edges.Add(new Edge(fromNode, gWeight[i]));
         }
 
-        var node = start;
+        return d;
+    }
+
+    public static int kruskals(int gNodes, List<int> gFrom, List<int> gTo, List<int> gWeight)
+    {
+        var tree = BuildTree(gFrom, gTo, gWeight);
+      
+        return primsTree(tree[gFrom[0]], gNodes);
+    }
+
+    static int primsTree(Node node, int totalNodes) {
+        var usedNodes = new HashSet<int>();
+        var edges = new List<Edge>(node.Edges);
         var sum = 0;
-        var options = new Dictionary<int, int>();
-        var usedv = new HashSet<int>();
-        usedv.Add(start);
 
-        foreach(var k in d[node].Keys) 
+        usedNodes.Add(node.Id);
+
+        while (usedNodes.Count != totalNodes) 
         {
-            options.Add(k, d[node][k]);
-        }
+            Edge minEdge = null;
 
-        while (usedv.Count != d.Count) 
-        {
-            var minv = -1;
-
-            foreach(var v in options.Keys) 
+            foreach(var edge in edges) 
             {
-                if (minv == -1 || options[v] < options[minv]) 
+                if (!usedNodes.Contains(edge.To.Id) && (minEdge == null || edge.Weight < minEdge.Weight)) 
                 {
-                    minv = v;
+                    minEdge = edge;
                 }
             }
 
-            foreach(var v in d[minv].Keys) 
-            {
-                if (options.ContainsKey(v) && options[v] > d[minv][v]) 
-                {
-                    options[v] = d[minv][v];
-                }
+            sum += minEdge.Weight;
+            usedNodes.Add(minEdge.To.Id);
 
-                if (!options.ContainsKey(v) && !usedv.Contains(v)) 
-                {
-                    options.Add(v, d[minv][v]);
-                }
-            }
-
-            sum += options[minv];
-            node = minv;
-
-            options.Remove(minv);
-            usedv.Add(minv);
+            edges.Remove(minEdge);
+            edges.AddRange(minEdge.To.Edges);
         }
 
         return sum;
     }
+}
 
-    static void Main(string[] args) {
+class Solution
+{
+    public static void Main(string[] args)
+    {
         TextWriter textWriter = new StreamWriter(@System.Environment.GetEnvironmentVariable("OUTPUT_PATH"), true);
 
-        string[] nm = Console.ReadLine().Split(' ');
+        string[] gNodesEdges = Console.ReadLine().TrimEnd().Split(' ');
 
-        int n = Convert.ToInt32(nm[0]);
+        int gNodes = Convert.ToInt32(gNodesEdges[0]);
+        int gEdges = Convert.ToInt32(gNodesEdges[1]);
 
-        int m = Convert.ToInt32(nm[1]);
+        List<int> gFrom = new List<int>();
+        List<int> gTo = new List<int>();
+        List<int> gWeight = new List<int>();
 
-        int[][] edges = new int[m][];
+        for (int i = 0; i < gEdges; i++)
+        {
+            string[] gFromToWeight = Console.ReadLine().TrimEnd().Split(' ');
 
-        for (int i = 0; i < m; i++) {
-            edges[i] = Array.ConvertAll(Console.ReadLine().Split(' '), edgesTemp => Convert.ToInt32(edgesTemp));
+            gFrom.Add(Convert.ToInt32(gFromToWeight[0]));
+            gTo.Add(Convert.ToInt32(gFromToWeight[1]));
+            gWeight.Add(Convert.ToInt32(gFromToWeight[2]));
         }
 
-        int start = Convert.ToInt32(Console.ReadLine());
+        int res = Result.kruskals(gNodes, gFrom, gTo, gWeight);
 
-        int result = prims(n, edges, start);
-
-        textWriter.WriteLine(result);
+        textWriter.WriteLine(res);
 
         textWriter.Flush();
         textWriter.Close();
